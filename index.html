@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameVault - Collaborative Game Library</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="index.css">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- Toastify for notifications -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+</head>
+
+<body>
+    <noscript>
+        <div style="background: #ff4444; color: white; padding: 15px; text-align: center; margin: 10px;">
+            <strong>JavaScript is disabled!</strong> This page requires JavaScript for full functionality. Please enable
+            JavaScript in your browser.
+        </div>
+    </noscript>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-key"></i> Login to GameVault</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="login-form">
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="loginEmail" placeholder="Email" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="loginPassword" placeholder="Password" required>
+                    </div>
+                    <button id="loginBtn" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                    <div class="auth-links">
+                        <span>Don't have an account? <a href="#" id="showRegisterLink">Register here</a></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registration Modal -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-plus"></i> Join GameVault</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="login-form">
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="registerEmail" placeholder="Email Address" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="registerPassword" placeholder="Password (min 6 characters)" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                    </div>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="requestAdmin">
+                            <span class="checkmark"></span>
+                            Request Admin Access (requires approval)
+                        </label>
+                    </div>
+                    <button id="registerBtn" class="btn btn-success">
+                        <i class="fas fa-user-plus"></i> Create Account
+                    </button>
+                    <div class="auth-links">
+                        <span>Already have an account? <a href="#" id="showLoginLink">Login here</a></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Game Modal -->
+    <div id="gameModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2><i class="fas fa-gamepad"></i> <span id="modalTitle">Add New Game</span></h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="gameForm">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="gameName"><i class="fas fa-tag"></i> Game Name</label>
+                            <input type="text" id="gameName" placeholder="Enter game name" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="gameSize"><i class="fas fa-weight-hanging"></i> File Size</label>
+                            <input type="text" id="gameSize" placeholder="e.g., 15.2 GB or 500 MB" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="gameSource"><i class="fas fa-source"></i> Source</label>
+                            <select id="gameSource" required>
+                                <option value="apun">ApunKaGames</option>
+                                <option value="fitgirl">FitGirl Repacks</option>
+                                <option value="steam">Steam</option>
+                                <option value="epic">Epic Games</option>
+                                <option value="gog">GOG</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="gameCategory"><i class="fas fa-folder"></i> Category</label>
+                            <select id="gameCategory" required>
+                                <option value="action">Action</option>
+                                <option value="adventure">Adventure</option>
+                                <option value="rpg">RPG</option>
+                                <option value="fps">FPS</option>
+                                <option value="strategy">Strategy</option>
+                                <option value="racing">Racing</option>
+                                <option value="sports">Sports</option>
+                                <option value="indie">Indie</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="gameStatus"><i class="fas fa-check-circle"></i> Status</label>
+                            <select id="gameStatus" required>
+                                <option value="not-started">Not Started</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="abandoned">Abandoned</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="gameRating"><i class="fas fa-star"></i> Rating</label>
+                            <select id="gameRating">
+                                <option value="">Not Rated</option>
+                                <option value="1">⭐ 1/5</option>
+                                <option value="2">⭐⭐ 2/5</option>
+                                <option value="3">⭐⭐⭐ 3/5</option>
+                                <option value="4">⭐⭐⭐⭐ 4/5</option>
+                                <option value="5">⭐⭐⭐⭐⭐ 5/5</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label for="gameDownloadLink"><i class="fas fa-link"></i> Download Link</label>
+                        <input type="url" id="gameDownloadLink" placeholder="https://..." required>
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label for="gameNotes"><i class="fas fa-sticky-note"></i> Notes</label>
+                        <textarea id="gameNotes" rows="4"
+                            placeholder="Installation notes, system requirements, or other important information..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelGameBtn">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="saveGameBtn">
+                            <i class="fas fa-save"></i> Save Game
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Requests Modal -->
+    <div id="adminRequestsModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2><i class="fas fa-users-cog"></i> Admin Access Requests</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="adminRequestsList">
+                    <!-- Admin requests will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1><i class="fas fa-gamepad"></i> GameVault</h1>
+                    <p class="header-subtitle">Collaborative Game Library</p>
+                </div>
+                <div class="header-right">
+                    <div class="user-info" id="userInfo" style="display: none;">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name" id="userName">User</span>
+                            <div class="user-controls">
+                                <label class="admin-toggle">
+                                    <input type="checkbox" id="adminMode">
+                                    <span class="toggle-slider"></span>
+                                    Admin Mode
+                                </label>
+                                <label class="admin-toggle" id="activityToggleContainer" style="display: none;">
+                                    <input type="checkbox" id="activityToggle">
+                                    <span class="toggle-slider"></span>
+                                    Show Activity
+                                </label>
+                                <button class="btn btn-sm btn-secondary" id="logoutBtn">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="loginToggle">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-section">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search games..." aria-label="Search games">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="admin-controls" id="adminControls" style="display: none;">
+                    <button class="btn btn-success" id="addGameBtn">
+                        <i class="fas fa-plus"></i> Add Game
+                    </button>
+                    <button class="btn btn-info" id="exportBtn">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <label class="btn btn-warning" for="importFile">
+                        <i class="fas fa-upload"></i> Import
+                        <input type="file" id="importFile" accept=".json" style="display: none;">
+                    </label>
+                    <button class="btn btn-secondary" id="manageAdminsBtn">
+                        <i class="fas fa-users-cog"></i> Admin Requests
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-group">
+                    <label>Source:</label>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="source" data-value="all">All</button>
+                        <button class="filter-btn" data-filter="source" data-value="apun">ApunKaGames</button>
+                        <button class="filter-btn" data-filter="source" data-value="fitgirl">FitGirl</button>
+                        <button class="filter-btn" data-filter="source" data-value="steam">Steam</button>
+                        <button class="filter-btn" data-filter="source" data-value="other">Other</button>
+                    </div>
+                </div>
+
+                <div class="filter-group status-filter-group">
+                    <label>Status:</label>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="status" data-value="all">All</button>
+                        <button class="filter-btn" data-filter="status" data-value="not-started">Not Started</button>
+                        <button class="filter-btn" data-filter="status" data-value="in-progress">In Progress</button>
+                        <button class="filter-btn" data-filter="status" data-value="completed">Completed</button>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label>Category:</label>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="category" data-value="all">All</button>
+                        <button class="filter-btn" data-filter="category" data-value="action">Action</button>
+                        <button class="filter-btn" data-filter="category" data-value="adventure">Adventure</button>
+                        <button class="filter-btn" data-filter="category" data-value="rpg">RPG</button>
+                        <button class="filter-btn" data-filter="category" data-value="fps">FPS</button>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label>Size:</label>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="size" data-value="all">All</button>
+                        <button class="filter-btn" data-filter="size" data-value="small">
+                            < 5GB</button>
+                                <button class="filter-btn" data-filter="size" data-value="medium">5-20GB</button>
+                                <button class="filter-btn" data-filter="size" data-value="large">> 20GB</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="activity-feed" id="activityFeed" style="display: none;">
+                <h3><i class="fas fa-clock"></i> Recent Activity</h3>
+                <div class="activity-list" id="activityList">
+                    <!-- Activity items will be populated here -->
+                </div>
+            </div>
+
+            <table id="gamesTable">
+                <thead>
+                    <tr>
+                        <th>Game</th>
+                        <th>Category</th>
+                        <th>Size</th>
+                        <th class="status-column">Status</th>
+                        <th>Rating</th>
+                        <th class="added-by-column" style="display: none;">Added By</th>
+                        <th class="actions-column">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="gamesTableBody">
+                    <!-- Games will be loaded dynamically from Firebase -->
+                </tbody>
+            </table>
+
+            <div class="no-results">
+                <i class="fas fa-search"></i>
+                <p>No games found matching your search</p>
+            </div>
+
+            <div class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>Loading games...</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>GameVault:</strong> Your collaborative game library management system</p>
+            <p><strong>Features:</strong> Real-time sync, progress tracking, and secure collaboration</p>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="totalGames">0</span>
+                    <span class="stat-label">TOTAL GAMES</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="totalSize">0 GB</span>
+                    <span class="stat-label">TOTAL SIZE</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="completedGames">0</span>
+                    <span class="stat-label">COMPLETED</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="totalSources">0</span>
+                    <span class="stat-label">SOURCES</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
